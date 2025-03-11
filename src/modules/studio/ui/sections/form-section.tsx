@@ -38,8 +38,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
+import { THUMBNAIL_FALLBACK } from "@/modules/videos/constants"
 import { VideoPlayer } from "@/modules/videos/ui/components/video-player"
-
 interface FormSectionProps {
   videoId: string
 }
@@ -103,7 +103,7 @@ const FormSectionSuspense = ({
   }
 
   // TODO: change if deploying outside of VERCEL
-  const fullUrl = `${process.env.VERCEL_URL || "http://localhost:3000"}/videos/${videoId}`
+  const fullUrl = `${process.env.VERCEL_URL ?? "http://localhost:3000"}/videos/${videoId}`
   const [isCopied, setIsCopied] = useState(false)
 
   const onCopy = async () => {
@@ -261,7 +261,7 @@ const FormSectionSuspense = ({
                       Video status
                     </p>
                     <p className="text-sm">
-                      {snakeCaseToTitle(video.muxStatus || "preparing")}
+                      {snakeCaseToTitle(video.muxStatus ?? "preparing")}
                     </p>
                   </div>
                 </div>
@@ -272,7 +272,7 @@ const FormSectionSuspense = ({
                       Subtitles status
                     </p>
                     <p className="text-sm">
-                      {snakeCaseToTitle(video.muxTrackStatus || "no_subtitles")}
+                      {snakeCaseToTitle(video.muxTrackStatus ?? "no_subtitles")}
                     </p>
                   </div>
                 </div>

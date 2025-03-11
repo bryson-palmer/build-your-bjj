@@ -126,7 +126,7 @@ const VideosSectionSuspense = () => {
                       <div className="flex flex-col overflow-hidden gap-y-1">
                         <span className="text-sm line-clamp-1">{video.title}</span>
                         <span className="text-xs text-muted-foreground line-clamp-1">
-                          {video.description || "No description"}
+                          {video.description ?? "No description"}
                         </span>
                       </div>
                     </div>
@@ -143,7 +143,7 @@ const VideosSectionSuspense = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center">
-                      {snakeCaseToTitle(video.muxStatus || "error")}
+                      {snakeCaseToTitle(video.muxStatus ?? "error")}
                     </div>
                   </TableCell>
                   <TableCell className="text-sm truncate">
