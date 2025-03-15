@@ -43,6 +43,7 @@ import { THUMBNAIL_FALLBACK } from "@/modules/videos/constants"
 import { VideoPlayer } from "@/modules/videos/ui/components/video-player"
 
 import { ThumbnailUploadModal } from "../components/thumbnail-upload-modal"
+import { ThumbnailGenerateModal } from "../components/thumbnail-generate-modal"
 interface FormSectionProps {
   videoId: string
 }
@@ -72,6 +73,8 @@ const FormSectionSuspense = ({
   const utils = trpc.useUtils()
 
   const [thumbnailModalOpen, setThumbnailModalOpen] = useState(false)
+  const [thumbnailGenerateModalOpen, setThumbnailGenerateModalOpen] = useState(false)
+
 
   const [video] = trpc.studio.getOne.useSuspenseQuery({ id: videoId })
   const [categories] = trpc.categories.getMany.useSuspenseQuery()
@@ -122,8 +125,6 @@ const FormSectionSuspense = ({
 
   const generateDescription = trpc.videos.generateDescription.useMutation(GENERATE_MUTATION_CONFIG)
 
-  const generateThumbnail = trpc.videos.generateThumbnail.useMutation(GENERATE_MUTATION_CONFIG)
-
   const form = useForm<z.infer<typeof videoUpdateSchema>>({
     resolver: zodResolver(videoUpdateSchema),
     defaultValues: video
@@ -148,6 +149,11 @@ const FormSectionSuspense = ({
 
   return (
     <>
+      <ThumbnailGenerateModal
+        open={thumbnailGenerateModalOpen}
+        onOpenChange={setThumbnailGenerateModalOpen}
+        videoId={videoId}
+      />
       <ThumbnailUploadModal
         open={thumbnailModalOpen}
         onOpenChange={setThumbnailModalOpen}
