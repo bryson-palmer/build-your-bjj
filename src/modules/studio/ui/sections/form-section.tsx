@@ -337,15 +337,21 @@ const FormSectionSuspense = ({
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="start" side="right">
-                            <DropdownMenuItem onClick={() => setThumbnailModalOpen(true)}>
+                            <DropdownMenuItem
+                              onClick={() => setThumbnailModalOpen(true)}
+                            >
                               <ImagePlusIcon className="size-4 mr-1" />
                               Change
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => generateThumbnail.mutate({ id: videoId })}>
+                            <DropdownMenuItem
+                              onClick={() => setThumbnailGenerateModalOpen(true)}
+                            >
                               <SparkleIcon className="size-4 mr-1" />
                               AI-generated
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => restoreThumbnail.mutate({ id: videoId })}>
+                            <DropdownMenuItem
+                              onClick={() => restoreThumbnail.mutate({ id: videoId })}
+                            >
                               <RotateCcwIcon className="size-4 mr-1" />
                               Restore
                             </DropdownMenuItem>
