@@ -1,8 +1,9 @@
-import { relations } from "drizzle-orm"
+// import { relations } from "drizzle-orm"
 import {
   integer,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -26,9 +27,9 @@ export const users = pgTable("users", {
 
 // Application level relationship between the user and videos
 // OPTIONAL: if using relational queries or not using postgres database
-export const userRelations = relations(users, ({ many }) => ({
-  videos: many(videos),
-}))
+// export const userRelations = relations(users, ({ many }) => ({
+//   videos: many(videos),
+// }))
 
 export const categories = pgTable("categories", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -40,9 +41,10 @@ export const categories = pgTable("categories", {
 
 // Application level relationship between the user and videos
 // OPTIONAL: if using relational queries or not using postgres database
-export const categoryRelations = relations(categories, ({ many }) => ({
-  videos: many(videos),
-}))
+// export const categoryRelations = relations(categories, ({ many }) => ({
+//   videos: many(videos),
+//   videoViews: many(videoViews),
+// }))
 
 export const videoVisibility = pgEnum("video_visibility", [
   "private",
@@ -81,13 +83,43 @@ export const videoSelectSchema = createSelectSchema(videos)
 
 // Application level relationship between the user and videos
 // OPTIONAL: if using relational queries or not using postgres database
-export const videoRelations = relations(videos, ({ one }) => ({
-  user: one(users, {
-    fields: [videos.userId],
-    references: [users.id],
-  }),
-  category: one(categories, {
-    fields: [videos.categoryId],
-    references: [categories.id],
+// export const videoRelations = relations(videos, ({ one, many }) => ({
+//   user: one(users, {
+//     fields: [videos.userId],
+//     references: [users.id],
+//   }),
+//   category: one(categories, {
+//     fields: [videos.categoryId],
+//     references: [categories.id],
+//   }),
+//   views: many(videoViews),
+// }))
+
+export const videoViews = pgTable("video_views", {
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  videoId: uuid("video_id").references(() => videos.id, { onDelete: "cascade" }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (t) => [
+  primaryKey({
+    name: "video_views_pk",
+    columns: [t.userId, t.videoId]
   })
-}))
+])
+
+// Application level relationship between the user and videos
+// OPTIONAL: if using relational queries or not using postgres database
+// export const videoViewRelations = relations(videoViews,  ({ one }) => ({
+//   users: one(users, {
+//     fields: [videoViews.userId],
+//     references: [users.id],
+//   }),
+//   videos: one(videos, {
+//     fields: [videoViews.videoId],
+//     references: [videos.id],
+//   })
+// }))
+
+export const videoViewSelectSchema = createSelectSchema(videoViews)
+export const videoViewInsertSchema = createInsertSchema(videoViews)
+export const videoViewUpdateSchema = createUpdateSchema(videoViews)
