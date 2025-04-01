@@ -29,6 +29,8 @@ export const users = pgTable("users", {
 // OPTIONAL: if using relational queries or not using postgres database
 // export const userRelations = relations(users, ({ many }) => ({
 //   videos: many(videos),
+//   videoViews: many(videoViews),
+//   videoReactions: many(videoReactions),
 // }))
 
 export const categories = pgTable("categories", {
@@ -93,6 +95,7 @@ export const videoSelectSchema = createSelectSchema(videos)
 //     references: [categories.id],
 //   }),
 //   views: many(videoViews),
+//   reactions: many(videoReactions),
 // }))
 
 export const videoViews = pgTable("video_views", {
@@ -106,6 +109,10 @@ export const videoViews = pgTable("video_views", {
     columns: [t.userId, t.videoId]
   })
 ])
+
+export const videoViewSelectSchema = createSelectSchema(videoViews)
+export const videoViewInsertSchema = createInsertSchema(videoViews)
+export const videoViewUpdateSchema = createUpdateSchema(videoViews)
 
 // Application level relationship between the user and videos
 // OPTIONAL: if using relational queries or not using postgres database
@@ -139,3 +146,15 @@ export const videoReactionSelectSchema = createSelectSchema(videoReactions)
 export const videoReactionInsertSchema = createInsertSchema(videoReactions)
 export const videoReactionUpdateSchema = createUpdateSchema(videoReactions)
 
+// Application level relationship between the user and videos
+// OPTIONAL: if using relational queries or not using postgres database
+// export const videoReactionRelations = relations(videoReactions,  ({ one }) => ({
+//   users: one(users, {
+//     fields: [videoReactions.userId],
+//     references: [users.id],
+//   }),
+//   videos: one(videos, {
+//     fields: [videoReactions.videoId],
+//     references: [videos.id],
+//   })
+// }))
