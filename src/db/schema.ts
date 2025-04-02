@@ -1,4 +1,4 @@
-// import { relations } from "drizzle-orm"
+import { relations } from "drizzle-orm"
 import {
   integer,
   pgEnum,
@@ -27,6 +27,18 @@ export const users = pgTable("users", {
 
 // Application level relationship between the user and videos
 // OPTIONAL: if using relational queries or not using postgres database
+export const userRelations = relations(users, ({ many }) => ({
+  videos: many(videos),
+  videoViews: many(videoViews),
+  videoReactions: many(videoReactions),
+  subscriptions: many(subscriptions, {
+    relationName: "subscriptions_viewer_id_fkey",
+  }),
+  subscribers: many(subscriptions, {
+    relationName: "subscriptions_creator_id_fkey",
+  }),
+}))
+
 export const subscriptions = pgTable("subscriptions", {
   viewerId: uuid("viewer_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   creatorId: uuid("creator_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
@@ -39,6 +51,21 @@ export const subscriptions = pgTable("subscriptions", {
   }),
 ])
 
+// Application level relationship between the user and videos
+// OPTIONAL: if using relational queries or not using postgres database
+export const subscriptionRelations = relations(subscriptions, ({ one }) => ({
+  viewerId: one(users, {
+    fields: [subscriptions.viewerId],
+    references: [users.id],
+    relationName: "subscriptions_viewer_id_fkey",
+  }), 
+  creatorId: one(users, {
+    fields: [subscriptions.creatorId],
+    references: [users.id],
+    relationName: "subscriptions_creator_id_fkey",
+  })
+}))
+
 export const categories = pgTable("categories", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull().unique(),
@@ -49,10 +76,9 @@ export const categories = pgTable("categories", {
 
 // Application level relationship between the user and videos
 // OPTIONAL: if using relational queries or not using postgres database
-// export const categoryRelations = relations(categories, ({ many }) => ({
-//   videos: many(videos),
-//   videoViews: many(videoViews),
-// }))
+export const categoryRelations = relations(categories, ({ many }) => ({
+  videos: many(videos),
+}))
 
 export const videoVisibility = pgEnum("video_visibility", [
   "private",
@@ -91,18 +117,18 @@ export const videoSelectSchema = createSelectSchema(videos)
 
 // Application level relationship between the user and videos
 // OPTIONAL: if using relational queries or not using postgres database
-// export const videoRelations = relations(videos, ({ one, many }) => ({
-//   user: one(users, {
-//     fields: [videos.userId],
-//     references: [users.id],
-//   }),
-//   category: one(categories, {
-//     fields: [videos.categoryId],
-//     references: [categories.id],
-//   }),
-//   views: many(videoViews),
-//   reactions: many(videoReactions),
-// }))
+export const videoRelations = relations(videos, ({ one, many }) => ({
+  user: one(users, {
+    fields: [videos.userId],
+    references: [users.id],
+  }),
+  category: one(categories, {
+    fields: [videos.categoryId],
+    references: [categories.id],
+  }),
+  views: many(videoViews),
+  reactions: many(videoReactions),
+}))
 
 export const videoViews = pgTable("video_views", {
   userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
@@ -122,16 +148,16 @@ export const videoViewUpdateSchema = createUpdateSchema(videoViews)
 
 // Application level relationship between the user and videos
 // OPTIONAL: if using relational queries or not using postgres database
-// export const videoViewRelations = relations(videoViews,  ({ one }) => ({
-//   users: one(users, {
-//     fields: [videoViews.userId],
-//     references: [users.id],
-//   }),
-//   videos: one(videos, {
-//     fields: [videoViews.videoId],
-//     references: [videos.id],
-//   })
-// }))
+export const videoViewRelations = relations(videoViews,  ({ one }) => ({
+  users: one(users, {
+    fields: [videoViews.userId],
+    references: [users.id],
+  }),
+  videos: one(videos, {
+    fields: [videoViews.videoId],
+    references: [videos.id],
+  })
+}))
 
 export const reactionType = pgEnum("reaction_type", ["like", "dislike"])
 
@@ -154,13 +180,13 @@ export const videoReactionUpdateSchema = createUpdateSchema(videoReactions)
 
 // Application level relationship between the user and videos
 // OPTIONAL: if using relational queries or not using postgres database
-// export const videoReactionRelations = relations(videoReactions,  ({ one }) => ({
-//   users: one(users, {
-//     fields: [videoReactions.userId],
-//     references: [users.id],
-//   }),
-//   videos: one(videos, {
-//     fields: [videoReactions.videoId],
-//     references: [videos.id],
-//   })
-// }))
+export const videoReactionRelations = relations(videoReactions,  ({ one }) => ({
+  users: one(users, {
+    fields: [videoReactions.userId],
+    references: [users.id],
+  }),
+  videos: one(videos, {
+    fields: [videoReactions.videoId],
+    references: [videos.id],
+  })
+}))
