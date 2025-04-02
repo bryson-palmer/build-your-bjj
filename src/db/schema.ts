@@ -27,11 +27,17 @@ export const users = pgTable("users", {
 
 // Application level relationship between the user and videos
 // OPTIONAL: if using relational queries or not using postgres database
-// export const userRelations = relations(users, ({ many }) => ({
-//   videos: many(videos),
-//   videoViews: many(videoViews),
-//   videoReactions: many(videoReactions),
-// }))
+export const subscriptions = pgTable("subscriptions", {
+  viewerId: uuid("viewer_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  creatorId: uuid("creator_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (t) => [
+  primaryKey({
+    name: "subscriptions_pk",
+    columns: [t.viewerId, t.creatorId]
+  }),
+])
 
 export const categories = pgTable("categories", {
   id: uuid("id").primaryKey().defaultRandom(),
