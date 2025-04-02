@@ -1,13 +1,13 @@
 import { z } from "zod"
 import { UTApi } from "uploadthing/server"
-import { and, eq, getTableColumns, inArray } from "drizzle-orm"
+import { and, eq, getTableColumns, inArray, isNotNull } from "drizzle-orm"
 
 import { db } from "@/db"
 import { mux } from "@/lib/mux"
 import { TRPCError } from "@trpc/server"
 import { workflow } from "@/lib/workflow"
 import { baseProcedure, createTRPCRouter, protectedProcedure } from "@/trpc/init"
-import { users, videoReactions, videos, videoUpdateSchema, videoViews } from "@/db/schema"
+import { subscriptions, users, videoReactions, videos, videoUpdateSchema, videoViews } from "@/db/schema"
 
 export const videosRouter = createTRPCRouter({
   // Have this explained further in the future regarding sub queries and common table expression
@@ -40,12 +40,23 @@ export const videosRouter = createTRPCRouter({
           .where(inArray(videoReactions.userId, userId ? [userId] : []))
       )
 
+      // Common table expression
+      const viewerSubscriptions = db.$with("viewer_subscriptions").as(
+        db
+          .select()
+          .from(subscriptions)
+          .where(inArray(subscriptions.viewerId, userId ? [userId] : []))
+      )
+
       const [existingVideo] = await db
-        .with(viewerReactions) // Using the CTE
+        .with(viewerReactions, viewerSubscriptions) // Using the CTEs
         .select({
           ...getTableColumns(videos), // Select all columns from videos
           user: {
             ...getTableColumns(users), // Select all columns from users (uploader)
+            subscriberCount: db.$count(subscriptions, eq(subscriptions.creatorId, users.id)),
+            // If ever breaks, use: sql<boolean>`${isNotNull(viewerSubscriptions.viewerId)}`
+            viewerSubscribed: isNotNull(viewerSubscriptions.viewerId).mapWith(Boolean)
           },
           // Subquery for view count
           viewCount: db.$count(videoViews, eq(videoViews.videoId, videos.id)),
@@ -69,8 +80,9 @@ export const videosRouter = createTRPCRouter({
           viewerReaction: viewerReactions.type,
         })
         .from(videos)
-        .innerJoin(users, eq(videos.userId, users.id)) // Join with the uploader's details
+        .innerJoin(users, eq(videos.userId, users.id)) // Join with the author of the video
         .leftJoin(viewerReactions, eq(viewerReactions.videoId, videos.id)) // Join with viewer reactions
+        .leftJoin(viewerSubscriptions, eq(viewerSubscriptions.creatorId, users.id)) // Join with viewer subscriptions
         .where(eq(videos.id, input.id)) // Filter for the requested video
         // .groupBy(
         //   videos.id,
