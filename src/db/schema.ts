@@ -54,12 +54,12 @@ export const subscriptions = pgTable("subscriptions", {
 // Application level relationship between the user and videos
 // OPTIONAL: if using relational queries or not using postgres database
 export const subscriptionRelations = relations(subscriptions, ({ one }) => ({
-  viewerId: one(users, {
+  viewer: one(users, {
     fields: [subscriptions.viewerId],
     references: [users.id],
     relationName: "subscriptions_viewer_id_fkey",
   }), 
-  creatorId: one(users, {
+  creator: one(users, {
     fields: [subscriptions.creatorId],
     references: [users.id],
     relationName: "subscriptions_creator_id_fkey",
