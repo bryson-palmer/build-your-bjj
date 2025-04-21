@@ -70,7 +70,7 @@ export const studioRouter = createTRPCRouter({
               id: lastItem.id,
               updatedAt: lastItem.updatedAt
             }
-          : null 
+          : null
 
       return {
         items,
