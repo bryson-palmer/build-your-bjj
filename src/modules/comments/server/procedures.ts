@@ -1,10 +1,10 @@
 import { z } from "zod"
-import { and, count, desc, eq, getTableColumns, lt, or } from "drizzle-orm"
+import { and, count, desc, eq, getTableColumns, inArray, lt, or } from "drizzle-orm"
 
 import { db } from "@/db"
-import { comments, users } from "@/db/schema"
-import { baseProcedure, createTRPCRouter, protectedProcedure } from "@/trpc/init"
 import { TRPCError } from "@trpc/server"
+import { commentReactions, comments, users } from "@/db/schema"
+import { baseProcedure, createTRPCRouter, protectedProcedure } from "@/trpc/init"
 
 export const commentsRouter = createTRPCRouter({
   create: protectedProcedure
@@ -60,8 +60,30 @@ export const commentsRouter = createTRPCRouter({
         limit: z.number().min(1).max(100),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const { clerkUserId } = ctx
       const { cursor, limit, videoId } = input
+
+      let userId
+      
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(inArray(users.clerkId, clerkUserId ? [clerkUserId] : []))
+
+      if (user) {
+        userId = user.id
+      }
+
+      const viewerReactions = db.$with("viewer_reactions").as(
+        db
+          .select({
+            commentId: commentReactions.commentId,
+            type: commentReactions.type,
+          })
+          .from(commentReactions)
+          .where(inArray(commentReactions.userId, userId ? [userId] : []))
+      )
 
       const [totalData, data] = await Promise.all([
         db
@@ -71,10 +93,26 @@ export const commentsRouter = createTRPCRouter({
           .from(comments)
           .where(eq(comments.videoId, videoId)),
         db
+          .with(viewerReactions)
           // Step 1: Select columns from the `comments` table and all fields from the `users` table.
           .select({
             ...getTableColumns(comments), // Gets all the columns from the `comments` table.
             user: users,                  // Selects the full `users` record and maps it under the key `user`.
+            viewerReaction: viewerReactions.type,
+            likeCount: db.$count(
+              commentReactions,
+              and(
+                eq(commentReactions.type, "like"),
+                eq(commentReactions.commentId, comments.id)
+              )
+            ),
+            dislikeCount: db.$count(
+              commentReactions,
+              and(
+                eq(commentReactions.type, "dislike"),
+                eq(commentReactions.commentId, comments.id)
+              )
+            )
             // totalCount: db.$count(comments, eq(comments.videoId, videoId))
           })
           // Step 2: Specify the main table to query from.
@@ -101,6 +139,7 @@ export const commentsRouter = createTRPCRouter({
           ))
           // Step 4: Join `users` table to get info about the comment authors.
           .innerJoin(users, eq(comments.userId, users.id))
+          .leftJoin(viewerReactions, eq(comments.id, viewerReactions.commentId))
           // Step 5: Order by newest comments first.
           .orderBy(desc(comments.updatedAt), desc(comments.id))
           // Step 6: Fetch `limit + 1` records.
