@@ -1,5 +1,8 @@
 "use client"
 
+import { Suspense } from "react"
+import { ErrorBoundary } from "react-error-boundary"
+
 import { trpc } from "@/trpc/client"
 import { DEFAULT_LIMIT } from "@/constants"
 import { InfiniteScroll } from "@/components/infinite-scroll"
@@ -30,6 +33,23 @@ const SuggestionsSectionSkeleton = () => {
 }
 
 export const SuggestionsSection = ({
+  videoId,
+  isManual,
+}: SuggestionsSectionProps) => {
+  return (
+    <Suspense fallback={<SuggestionsSectionSkeleton />}>
+      <ErrorBoundary fallback={<p>Error</p>}>
+        <SuggestionsSectionSuspense
+          videoId={videoId}
+          isManual={isManual}
+        />
+      </ErrorBoundary>
+    </Suspense>
+  )
+
+}
+
+const SuggestionsSectionSuspense = ({
   videoId,
   isManual,
 }: SuggestionsSectionProps) => {
