@@ -1,8 +1,8 @@
 "use client"
 
+import { Suspense } from "react"
 import { trpc } from "@/trpc/client"
 import { useRouter } from "next/navigation"
-import { Suspense } from "react"
 import { ErrorBoundary } from "react-error-boundary"
 
 import { FilterCarousel } from "@/components/filter-carousel"
