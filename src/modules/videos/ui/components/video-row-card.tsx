@@ -46,7 +46,7 @@ interface VideoRowCardProps extends VariantProps<typeof videoRowCardVariants> {
   onRemove?: () => void, 
 }
 
-export const VideoRowCardSkeleton = ({ size }: VariantProps<typeof videoRowCardVariants>) => {
+export const VideoRowCardSkeleton = ({ size = "default" }: VariantProps<typeof videoRowCardVariants>) => {
   return (
     <div className={videoRowCardVariants({ size })}>
       {/* Thumbnail skeleton */}
@@ -84,7 +84,7 @@ export const VideoRowCardSkeleton = ({ size }: VariantProps<typeof videoRowCardV
 
 export const VideoRowCard = ({
   data,
-  size,
+  size = "default",
   onRemove,
 }: VideoRowCardProps) => {
   const compactViews = useMemo(() => {
