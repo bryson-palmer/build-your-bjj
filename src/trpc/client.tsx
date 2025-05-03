@@ -25,9 +25,8 @@ function getQueryClient() {
 function getUrl() {
   const base = (() => {
     if (typeof window !== "undefined") return ""
-    // TODO: if not using vercel, modify for outside-vercel deployment
-    if (APP_URL) return `https://${APP_URL}` // If not using vercel, will need to update this
-    return "http://localhost:3000"
+    // Crucial to modify in .env to production domain (including protocol)
+    return APP_URL
   })()
   return `${base}/api/trpc`
 }
