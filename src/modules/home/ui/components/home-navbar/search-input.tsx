@@ -9,8 +9,10 @@ import { Button } from "@/components/ui/button"
 
 export const SearchInput = () => {
   const router = useRouter()
-  const [value, setValue] = useState("")
+  const [value, setValue] = useState(query)
 
+  // TODO: need to handle when clearing query and not updating the url
+  // TODO: need to handle when searching exact title and video doesn't show up in suggestions
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 

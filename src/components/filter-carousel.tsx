@@ -42,6 +42,8 @@ export const FilterCarousel = ({
       return
     }
 
+    // TODO: need to handle when selecting from carousel and updating url
+
     setCount(api.scrollSnapList().length)
     setCurrent(api.selectedScrollSnap() + 1)
     api.on("select", () => {
