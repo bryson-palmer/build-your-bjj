@@ -16,8 +16,9 @@ export const SearchInput = () => {
 
   const [value, setValue] = useState(query)
 
-  // TODO: need to handle when clearing query and not updating the url
-  // TODO: need to handle when searching exact title and video doesn't show up in suggestions
+  // TODO: When clearing query in search input, url not updating
+  // TODO: When searching exact title, video doesn't show up (search doesn't like spaces)
+  // TODO: When selecting Home from nav side bar, search input and url doesn't clear/update
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 

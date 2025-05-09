@@ -42,7 +42,8 @@ export const FilterCarousel = ({
       return
     }
 
-    // TODO: need to handle when selecting from carousel and updating url
+    // TODO: when we have a categoryId and then add search query,
+    //       category stays selected but the carousel snaps back to the beginning
 
     setCount(api.scrollSnapList().length)
     setCurrent(api.selectedScrollSnap() + 1)
@@ -92,7 +93,7 @@ export const FilterCarousel = ({
             ))
           }
           {!isLoading && data.map(item => (
-            // We have an onSelect but we will need a deselect option for unclicking and removing a categoryId
+            // TODO: we have an onSelect but we will need a deselect option for unclicking and removing a categoryId
             <CarouselItem
               key={item.value}
               onClick={() => onSelect(item.value)}
