@@ -38,7 +38,7 @@ export const searchRouter = createTRPCRouter({
         .from(videos)
         .innerJoin(users, eq(videos.userId, users.id))
         .where(and(
-          // TODO: need to look at how 'ilike' works. Querying not inclusive enough.
+          eq(videos.visibility, "public"),
           // TODO: need to look at how 'ilike' works. Searches for exact titles don't return expected video
           ilike(videos.title, `%${query}%`),
           categoryId ? eq(videos.categoryId, categoryId) : undefined,
