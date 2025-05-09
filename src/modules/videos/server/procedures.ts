@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { UTApi } from "uploadthing/server"
-import { and, eq, getTableColumns, inArray, isNotNull } from "drizzle-orm"
+import { and, desc, eq, getTableColumns, inArray, isNotNull, lt, or } from "drizzle-orm"
 
 import { db } from "@/db"
 import { mux } from "@/lib/mux"
@@ -10,6 +10,230 @@ import { baseProcedure, createTRPCRouter, protectedProcedure } from "@/trpc/init
 import { subscriptions, users, videoReactions, videos, videoUpdateSchema, videoViews } from "@/db/schema"
 
 export const videosRouter = createTRPCRouter({
+  getManySubscriptions: protectedProcedure
+    .input(
+      z.object({
+        cursor: z.object({
+          id: z.string().uuid(),
+          updatedAt: z.date(),
+        })
+        .nullish(),
+        limit: z.number().min(1).max(100),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const { id: userId } = ctx.user
+      const { cursor, limit } = input
+
+      const viewerSubscriptions = db.$with("viewer_subscriptions").as(
+        db
+          .select({
+            userId: subscriptions.creatorId,
+          })
+          .from(subscriptions)
+          .where(eq(subscriptions.viewerId, userId))
+      )
+
+
+      const data = await db
+        .with(viewerSubscriptions)
+        .select({
+          ...getTableColumns(videos),
+          // Load the user
+          user: users,
+          // Get the counts
+          viewCount: db.$count(videoViews, eq(videoViews.videoId, videos.id)),
+          likeCount: db.$count(videoReactions, and(
+            eq(videoReactions.videoId, videos.id),
+            eq(videoReactions.type, "like")
+          )),
+          dislikeCount: db.$count(videoReactions, and(
+            eq(videoReactions.videoId, videos.id),
+            eq(videoReactions.type, "dislike")
+          )),
+        })
+        .from(videos)
+        // Join the user
+        .innerJoin(users, eq(videos.userId, users.id))
+        .innerJoin(viewerSubscriptions, eq(viewerSubscriptions.userId, users.id))
+        .where(and(
+          // Public videos
+          eq(videos.visibility, "public"),
+          // Pagination
+          cursor
+            ? or(
+                lt(videos.updatedAt, cursor.updatedAt),
+                and(
+                  eq(videos.updatedAt, cursor.updatedAt),
+                  lt(videos.id, cursor.id),
+                )
+              )
+            : undefined,
+        ))
+        .orderBy(desc(videos.updatedAt), desc(videos.id))
+        // Add 1 to the limit to check if there is more data
+        .limit(limit + 1)
+  
+        const hasMore = data.length > limit
+        // Remove the last item if there is more data
+        const items = hasMore ? data.slice(0, -1) : data
+        // Set the next cursor to the last item if there is more data
+        const lastItem = items[items.length - 1]
+        const nextCursor = hasMore
+          ? {
+              id: lastItem.id,
+              updatedAt: lastItem.updatedAt
+            }
+          : null
+  
+      return {
+        items,
+        nextCursor,
+      }
+    }),
+  getManyTrending: baseProcedure
+    .input(
+      z.object({
+        cursor: z.object({
+          id: z.string().uuid(),
+          viewCount: z.number(),
+        })
+        .nullish(),
+        limit: z.number().min(1).max(100),
+      })
+    )
+    .query(async ({ input }) => {
+      const { cursor, limit } = input
+
+      const viewCountSubquery = db.$count(
+        videoViews,
+        eq(videoViews.videoId, videos.id),
+      )
+
+      const data = await db
+        .select({
+          ...getTableColumns(videos),
+          // Load the user
+          user: users,
+          // Get the counts
+          viewCount: viewCountSubquery,
+          likeCount: db.$count(videoReactions, and(
+            eq(videoReactions.videoId, videos.id),
+            eq(videoReactions.type, "like")
+          )),
+          dislikeCount: db.$count(videoReactions, and(
+            eq(videoReactions.videoId, videos.id),
+            eq(videoReactions.type, "dislike")
+          )),
+        })
+        .from(videos)
+        // Join the user
+        .innerJoin(users, eq(videos.userId, users.id))
+        .where(and(
+          // Public videos
+          eq(videos.visibility, "public"),
+          // Pagination
+          cursor
+            ? or(
+                lt(viewCountSubquery, cursor.viewCount),
+                and(
+                  eq(viewCountSubquery, cursor.viewCount),
+                  lt(videos.id, cursor.id),
+                )
+              )
+            : undefined,
+        ))
+        .orderBy(desc(viewCountSubquery), desc(videos.id))
+        // Add 1 to the limit to check if there is more data
+        .limit(limit + 1)
+  
+        const hasMore = data.length > limit
+        // Remove the last item if there is more data
+        const items = hasMore ? data.slice(0, -1) : data
+        // Set the next cursor to the last item if there is more data
+        const lastItem = items[items.length - 1]
+        const nextCursor = hasMore
+          ? {
+              id: lastItem.id,
+              viewCount: lastItem.viewCount
+            }
+          : null
+  
+      return {
+        items,
+        nextCursor,
+      }
+    }),
+  getMany: baseProcedure
+    .input(
+      z.object({
+        categoryId: z.string().uuid().nullish(),
+        cursor: z.object({
+          id: z.string().uuid(),
+          updatedAt: z.date(),
+        })
+        .nullish(),
+        limit: z.number().min(1).max(100),
+      })
+    )
+    .query(async ({ input }) => {
+      const { cursor, limit, categoryId } = input
+      const data = await db
+        .select({
+          ...getTableColumns(videos),
+          // Load the user
+          user: users,
+          // Get the counts
+          viewCount: db.$count(videoViews, eq(videoViews.videoId, videos.id)),
+          likeCount: db.$count(videoReactions, and(
+            eq(videoReactions.videoId, videos.id),
+            eq(videoReactions.type, "like")
+          )),
+          dislikeCount: db.$count(videoReactions, and(
+            eq(videoReactions.videoId, videos.id),
+            eq(videoReactions.type, "dislike")
+          )),
+        })
+        .from(videos)
+        // Join the user
+        .innerJoin(users, eq(videos.userId, users.id))
+        .where(and(
+          // Public videos
+          eq(videos.visibility, "public"),
+          // By category id if present
+          categoryId ? eq(videos.categoryId, categoryId) : undefined,
+          // Pagination
+          cursor
+            ? or(
+                lt(videos.updatedAt, cursor.updatedAt),
+                and(
+                  eq(videos.updatedAt, cursor.updatedAt),
+                  lt(videos.id, cursor.id),
+                )
+              )
+            : undefined,
+        ))
+        .orderBy(desc(videos.updatedAt), desc(videos.id))
+        // Add 1 to the limit to check if there is more data
+        .limit(limit + 1)
+  
+        const hasMore = data.length > limit
+        // Remove the last item if there is more data
+        const items = hasMore ? data.slice(0, -1) : data
+        // Set the next cursor to the last item if there is more data
+        const lastItem = items[items.length - 1]
+        const nextCursor = hasMore
+          ? {
+              id: lastItem.id,
+              updatedAt: lastItem.updatedAt
+            }
+          : null
+  
+      return {
+        items,
+        nextCursor,
+      }
+    }),
   // Have this explained further in the future regarding sub queries and common table expression
   getOne: baseProcedure
     .input(z.object({ id: z.string().uuid() }))
