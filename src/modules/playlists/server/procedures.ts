@@ -161,6 +161,52 @@ export const playlistsRouter = createTRPCRouter({
             eq(playlists.id, playlistVideos.playlistId)
           ),
           user: users,
+          thumbnailUrl: sql<string | null>`(
+            SELECT v.thumbnail_url
+            FROM ${playlistVideos} pv
+            JOIN ${videos} v ON v.id = pv.video_id
+            WHERE pv.playlist_id = ${playlists.id}
+            ORDER BY pv.updated_at DESC
+            LIMIT 1
+          )`,
+        })
+        .from(playlists)
+        // Join the user
+        .innerJoin(users, eq(playlists.userId, users.id))
+        .where(and(
+          eq(playlists.userId, userId),
+          // Pagination
+          cursor
+            ? or(
+                lt(playlists.updatedAt, cursor.updatedAt),
+                and(
+                  eq(playlists.updatedAt, cursor.updatedAt),
+                  lt(playlists.id, cursor.id),
+                )
+              )
+            : undefined,
+        ))
+        .orderBy(desc(playlists.updatedAt), desc(playlists.id))
+        // Add 1 to the limit to check if there is more data
+        .limit(limit + 1)
+  
+        const hasMore = data.length > limit
+        // Remove the last item if there is more data
+        const items = hasMore ? data.slice(0, -1) : data
+        // Set the next cursor to the last item if there is more data
+        const lastItem = items[items.length - 1]
+        const nextCursor = hasMore
+          ? {
+              id: lastItem.id,
+              updatedAt: lastItem.updatedAt
+            }
+          : null
+  
+      return {
+        items,
+        nextCursor,
+      }
+    }),
   getManyForVideo: protectedProcedure
     .input(
       z.object({
