@@ -17,7 +17,6 @@ import {
 import { StudioSidebarHeader } from "./studio-sidebar-header"
 
 export const StudioSidebar = () => {
-
   const pathname = usePathname()
 
   return (

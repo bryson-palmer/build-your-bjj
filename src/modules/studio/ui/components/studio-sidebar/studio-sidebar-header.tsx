@@ -1,9 +1,9 @@
-import { useUser } from "@clerk/nextjs"
 import Link from "next/link"
+import { useUser } from "@clerk/nextjs"
 
 import { Skeleton } from "@/components/ui/skeleton"
-import { SidebarHeader, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar"
 import { UserAvatar } from "@/components/user-avatar"
+import { SidebarHeader, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar"
 
 export const StudioSidebarHeader = () => {
   const { user } = useUser()
