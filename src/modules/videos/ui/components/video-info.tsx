@@ -54,7 +54,7 @@ export const VideoInfo = ({
             {data.title}
           </h3>
         </Link>
-        <Link href={`/videos/${data.id}`}>
+        <Link href={`/users/${data.user.id}`}>
           <UserInfo
             name={data.user.name}
           />
