@@ -12,6 +12,57 @@ const f = createUploadthing()
 // FileRouter for your app, can contain multiple FileRoutes
 export const ourFileRouter = {
   // Define as many FileRoutes as you like, each with a unique routeSlug
+  bannerUploader: f({
+    image: {
+      maxFileSize: "4MB",
+      maxFileCount: 1,
+    },
+  })
+    // Set permissions and file types for this FileRoute
+    .middleware(async () => {
+      // This code runs on your server before upload
+      const { userId: clerkUserId } = await auth()
+
+      // If you throw, the user will not be able to upload
+      if (!clerkUserId) throw new UploadThingError("Unauthorized")
+
+      // Get user from database
+      const [existingUser] = await db
+        .select()
+        .from(users)
+        .where(eq(users.clerkId, clerkUserId))
+
+      if (!existingUser) throw new UploadThingError("Unauthorized")
+
+      // Clean up method for old bannerKey
+      if (existingUser.bannerKey) {
+        const utapi = new UTApi()
+
+        // Clean up uploadThing bannerKey
+        await utapi.deleteFiles(existingUser.bannerKey)
+        // Clean up database bannerKey
+        await db
+          .update(users)
+          .set({ bannerKey: null, bannerUrl: null })
+          .where(eq(users.id, existingUser.id))
+      }
+
+      // Whatever is returned here is accessible in onUploadComplete as `metadata`
+      return { userId: existingUser.id }
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      // This code RUNS ON YOUR SERVER after upload
+      await db
+        .update(users)
+        .set({
+          bannerUrl: file.url,
+          bannerKey: file.key,
+        })
+        .where(eq(users.id, metadata.userId)) // Make sure user is the owner of this video
+
+      // !!! Whatever is returned here is sent to the clientside `onClientUploadComplete` callback
+      return { uploadedBy: metadata.userId }
+    }),
   thumbnailUploader: f({
     image: {
       /**
