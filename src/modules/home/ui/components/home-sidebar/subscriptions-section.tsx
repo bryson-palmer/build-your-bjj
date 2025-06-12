@@ -52,7 +52,7 @@ export const SubscriptionsSection = () => {
                 tooltip={subscription.user.name}
                 isActive={pathname === `/users/${subscription.user.id}`}
               >
-                <Link href={`/users/${subscription.user.id}`} className="flex items-center gap-4">
+                <Link prefetch href={`/users/${subscription.user.id}`} className="flex items-center gap-4">
                   <UserAvatar
                     imageUrl={subscription.user.imageUrl}
                     name={subscription.user.name}
@@ -69,7 +69,7 @@ export const SubscriptionsSection = () => {
                 asChild
                 isActive={pathname === "/subscriptions"}
               >
-                <Link
+                <Link prefetch
                   href="/subscriptions"
                   className="flex items-center gap-4"
                 >
