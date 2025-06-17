@@ -11,7 +11,8 @@ import {
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem
+  SidebarMenuItem,
+  useSidebar
 } from "@/components/ui/sidebar"
 import { DEFAULT_LIMIT } from "@/constants"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -32,6 +33,7 @@ export const LoadingSkeleton = () => (
 
 export const SubscriptionsSection = () => {
   const pathname = usePathname()
+  const { setOpenMobile } = useSidebar()
   const { data, isLoading } = trpc.subscriptions.getMany.useInfiniteQuery(
     { limit: DEFAULT_LIMIT },
     { getNextPageParam: (lastPage) => lastPage.nextCursor }
@@ -52,7 +54,12 @@ export const SubscriptionsSection = () => {
                 tooltip={subscription.user.name}
                 isActive={pathname === `/users/${subscription.user.id}`}
               >
-                <Link prefetch href={`/users/${subscription.user.id}`} className="flex items-center gap-4">
+                <Link
+                  prefetch
+                  href={`/users/${subscription.user.id}`}
+                  className="flex items-center gap-4"
+                  onClick={() => setOpenMobile(false)}
+                >
                   <UserAvatar
                     imageUrl={subscription.user.imageUrl}
                     name={subscription.user.name}
@@ -69,9 +76,11 @@ export const SubscriptionsSection = () => {
                 asChild
                 isActive={pathname === "/subscriptions"}
               >
-                <Link prefetch
+                <Link
+                  prefetch
                   href="/subscriptions"
                   className="flex items-center gap-4"
+                  onClick={() => setOpenMobile(false)}
                 >
                   <ListIcon className="size-4" />
                   <span className="text-sm">All subscriptions</span>

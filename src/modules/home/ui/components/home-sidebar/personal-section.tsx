@@ -11,7 +11,8 @@ import {
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem
+  SidebarMenuItem,
+  useSidebar
 } from "@/components/ui/sidebar"
 
 const items = [
@@ -37,8 +38,9 @@ const items = [
 
 export const PersonalSection = () => {
   const clerk = useClerk()
-  const { isSignedIn } = useAuth()
   const pathname = usePathname()
+  const { isSignedIn } = useAuth()
+  const { setOpenMobile } = useSidebar()
 
   return (
     <SidebarGroup>
@@ -58,7 +60,12 @@ export const PersonalSection = () => {
                   }
                 }}
               >
-                <Link prefetch href={item.url} className="flex items-center gap-4">
+                <Link
+                  prefetch
+                  href={item.url}
+                  className="flex items-center gap-4"
+                  onClick={() => setOpenMobile(false)}
+                >
                   <item.icon />
                   <span className="text-sm">{item.title}</span>
                 </Link>
