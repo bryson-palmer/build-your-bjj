@@ -50,6 +50,7 @@ export const PlaylistThumbnail = ({
         <div className="relative overflow-hidden w-full rounded-xl aspect-video">
           <Image
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             src={imageUrl || THUMBNAIL_FALLBACK}
             alt={title}
             className="w-full h-full object-cover"
