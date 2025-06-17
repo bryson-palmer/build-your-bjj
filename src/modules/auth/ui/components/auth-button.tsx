@@ -6,13 +6,11 @@ import { UserButton, SignInButton, SignedIn, SignedOut } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 
 export const AuthButton = () => {
-  // TODO: add different auth states
   return (
     <>
       <SignedIn>
         <UserButton>
           <UserButton.MenuItems>
-            {/* TODO: add user porfile menu button */}
             <UserButton.Link
               href="/users/current"
               label="My Profile"
