@@ -332,46 +332,50 @@ const FormSectionSuspense = ({
                 name="thumbnailUrl"
                 render={() => (
                   <FormItem>
-                    <FormLabel>Thumbnail</FormLabel>
+                    <FormLabel htmlFor="thumbnailUrl">Thumbnail</FormLabel>
                     <FormControl>
-                      <div className="p-0.5 border border-dashed border-neutral-400 relative h-[84px] w-[153px] group">
-                        <Image
-                          fill
-                          src={video.thumbnailUrl ?? THUMBNAIL_FALLBACK}
-                          alt="Thumbnail"
-                          className="object-cover"
-                        />
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              type="button"
-                              size="icon"
-                              className="bg-black/50 hover:bg-black/50 absolute top-1 right-1 rounded-full opacity-100 md:opacity-0 group-hover:opacity-100 duration-300 size-7"
-                            >
-                              <MoreVerticalIcon className="text-white" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" side="right">
-                            <DropdownMenuItem
-                              onClick={() => setThumbnailModalOpen(true)}
-                            >
-                              <ImagePlusIcon className="size-4 mr-1" />
-                              Change
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setThumbnailGenerateModalOpen(true)}
-                            >
-                              <SparkleIcon className="size-4 mr-1" />
-                              AI-generated
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => restoreThumbnail.mutate({ id: videoId })}
-                            >
-                              <RotateCcwIcon className="size-4 mr-1" />
-                              Restore
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                      <div>
+                        <input id="thumbnailUrl" type="text" className="contents" />
+                        <div className="p-0.5 border border-dashed border-neutral-400 relative h-[84px] w-[153px] group">
+                          <Image
+                            fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            src={video.thumbnailUrl ?? THUMBNAIL_FALLBACK}
+                            alt="Thumbnail"
+                            className="object-cover"
+                          />
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                type="button"
+                                size="icon"
+                                className="bg-black/50 hover:bg-black/50 absolute top-1 right-1 rounded-full opacity-100 md:opacity-0 group-hover:opacity-100 duration-300 size-7"
+                              >
+                                <MoreVerticalIcon className="text-white" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" side="right">
+                              <DropdownMenuItem
+                                onClick={() => setThumbnailModalOpen(true)}
+                              >
+                                <ImagePlusIcon className="size-4 mr-1" />
+                                Change
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => setThumbnailGenerateModalOpen(true)}
+                              >
+                                <SparkleIcon className="size-4 mr-1" />
+                                AI-generated
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => restoreThumbnail.mutate({ id: videoId })}
+                              >
+                                <RotateCcwIcon className="size-4 mr-1" />
+                                Restore
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
                     </FormControl>
                   </FormItem>
@@ -387,6 +391,7 @@ const FormSectionSuspense = ({
                       Category
                     </FormLabel>
                     <Select
+                      name={field.name}
                       onValueChange={field.onChange}
                       defaultValue={field.value ?? undefined}
                     >
@@ -478,6 +483,7 @@ const FormSectionSuspense = ({
                       Visibility
                     </FormLabel>
                     <Select
+                      name={field.name}
                       onValueChange={field.onChange}
                       defaultValue={field.value ?? undefined}
                     >
