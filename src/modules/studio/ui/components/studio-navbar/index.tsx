@@ -15,7 +15,7 @@ export const StudioNavbar = () => {
           <SidebarTrigger />
           <Link prefetch href="/studio" className="hidden md:block">
             <div className="p-4 flex items-center gap-1">
-              <Image src="/logo.svg" alt="Video tube logo" width={32} height={32} />
+              <Image src="/logo.svg" alt="Video tube logo" width={32} height={32} style={{ width: 32, height: 32 }} />
               <p className="text-xl font-semibold tracking-tight">Studio</p>
             </div>
           </Link>
