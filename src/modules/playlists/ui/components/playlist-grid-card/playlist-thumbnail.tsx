@@ -35,6 +35,17 @@ export const PlaylistThumbnail = ({
     }).format(videoCount)
   }, [videoCount])
 
+  const formatVideoCount = (count: string): string => {
+    let pluralizedVideoCount
+    if (count === "1") {
+      pluralizedVideoCount = "1 video"
+    } else {
+      pluralizedVideoCount = `${count} videos`
+    }
+
+    return pluralizedVideoCount
+  }
+
   return (
     <div className={cn("relative pt-3", className)}>
       {/* Stack effect layers */}
@@ -69,8 +80,7 @@ export const PlaylistThumbnail = ({
       {/* Video count indicator */}
       <div className="absolute bottom-2 right-2 px-1 py-0.5 rounded bg-black/80 text-white text-xs font-medium flex items-center gap-x-1">
         <ListVideoIcon className="size-4" />
-          {/* TODO: add inflection logic */}
-        {compactViews} videos
+          {formatVideoCount(compactViews)}
       </div>
     </div>
   )
