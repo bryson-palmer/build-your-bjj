@@ -2,21 +2,22 @@
 
 import { Suspense } from "react"
 import { trpc } from "@/trpc/client"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { ErrorBoundary } from "react-error-boundary"
 
 import { FilterCarousel } from "@/components/filter-carousel"
 
 // If categoryId becomes an [] of string ids, would need to update here
 interface CategoriesSectionProps {
+  query?: string,
   categoryId?: string
 }
 
-export const CategoriesSection = ({ categoryId }: CategoriesSectionProps) => {
+export const CategoriesSection = (params: CategoriesSectionProps) => {
   return (
     <Suspense fallback={<CategoriesSkeleton />}>
       <ErrorBoundary fallback={<p>Error...</p>}>
-        <CategoriesSectionSuspense categoryId={categoryId} />
+        <CategoriesSectionSuspense {...params} />
       </ErrorBoundary>
     </Suspense>
   )
@@ -26,8 +27,9 @@ const CategoriesSkeleton = () => {
   return <FilterCarousel isLoading data={[]} onSelect={() => {}} />
 }
 
-const CategoriesSectionSuspense = ({ categoryId }: CategoriesSectionProps) => {
+const CategoriesSectionSuspense = ({ categoryId, query }: CategoriesSectionProps) => {
   const router = useRouter()
+  const pathname = usePathname()
   const [categories] = trpc.categories.getMany.useSuspenseQuery()
 
   const data = categories.map(({ id, name }) => ({
@@ -36,17 +38,24 @@ const CategoriesSectionSuspense = ({ categoryId }: CategoriesSectionProps) => {
   }))
 
   const onSelect = (value: string | null) => {
-    const url = new URL(window.location.href)
-
-    // If searchParams changes to become an [] Array of ids,
+    const params = new URLSearchParams()
+    
+    // If params changes to become an [] Array of ids,
     // then we will have to use a different method other than set. append perhaps
-    if (value) {
-      url.searchParams.set("categoryId", value)
-    } else {
-      url.searchParams.delete("categoryId")
+    if (query) {
+      params.set("query", query)
     }
 
-    router.push(url.toString())
+    if (value && value !== categoryId) {
+      params.set("categoryId", value)
+    } else {
+      params.delete("categoryId")
+    }
+    
+    const newUrl = pathname === "/search" && query
+      ? `/search?${params.toString()}`
+      : `/?${params.toString()}`
+    router.push(newUrl)
   }
 
   return <FilterCarousel onSelect={onSelect} value={categoryId} data={data} />
