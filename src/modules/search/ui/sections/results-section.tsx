@@ -56,29 +56,55 @@ const ResultsSectionSuspense = ({
       getNextPageParam: (lastPage) => lastPage.nextCursor,
     }
   )
+
+  const videos = results.pages.flatMap(page => page.items)
+  const hasVideos = !!videos.length
+  
+  // Cleared search input return early
+  if (!query && !categoryId) {
+    return (
+      <div className="text-center text-muted-foreground mt-10">
+        <h2 className="text-xl font-semibold">Start Exploring</h2>
+        <p className="mt-2">Use the search box above or select a category to begin.</p>
+      </div>
+    )
+  }
+
   return (
     <>
-      <div className="flex flex-col gap-4 gap-y-10 md:hidden">
-        {results.pages
-          .flatMap(page => page.items)
-          .map(video => (
-            <VideoGridCard key={video.id} data={video} />
-          ))
-        }
-      </div>
-      <div className="hidden md:flex flex-col gap-4">
-        {results.pages
-          .flatMap(page => page.items)
-          .map(video => (
-            <VideoRowCard key={video.id} data={video} />
-          ))
-        }
-      </div>
-      <InfiniteScroll
-        hasNextPage={resultsQuery.hasNextPage}
-        isFetchingNextPage={resultsQuery.isFetchingNextPage}
-        fetchNextPage={resultsQuery.fetchNextPage}
-      />
+      {!hasVideos && (
+        <div className="text-center text-muted-foreground mt-10">
+          <h2 className="text-xl font-semibold">We&apos;re sorry. We were not able to find a match.</h2>
+          <p className="mt-2">Try another search</p>
+        </div>
+      )}
+      
+      {hasVideos && (
+        <div>
+          {/* Mobile */}
+          <div className="flex flex-col gap-4 gap-y-10 md:hidden">
+            {videos
+              .map(video => (
+                <VideoGridCard key={video.id} data={video} />
+              ))
+            }
+          </div>
+          
+          {/* Desktop */}
+          <div className="hidden md:flex flex-col gap-4">
+            {videos
+              .map(video => (
+                <VideoRowCard key={video.id} data={video} />
+              ))
+            }
+          </div>
+          <InfiniteScroll
+            hasNextPage={resultsQuery.hasNextPage}
+            isFetchingNextPage={resultsQuery.isFetchingNextPage}
+            fetchNextPage={resultsQuery.fetchNextPage}
+          />
+        </div>
+      )}
     </>
   )
 }
