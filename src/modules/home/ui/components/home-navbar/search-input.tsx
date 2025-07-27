@@ -1,18 +1,18 @@
 "use client"
 
-import { Suspense, useState } from "react"
 import { SearchIcon, XIcon } from "lucide-react"
 import { ErrorBoundary } from "react-error-boundary"
-import { useRouter, useSearchParams } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { Suspense, useCallback, useEffect, useState } from "react"
 
-import { APP_URL } from "@/constants"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useSearchNavigation } from "@/hooks/use-search-navigation"
 
 export const SearchInput = () => {
   return (
     <Suspense fallback={<Skeleton className="h-10 w-full" />}>
-      <ErrorBoundary fallback={<p>Error</p>}>
+      <ErrorBoundary fallback={<p>Error loading search input</p>}>
         <SearchInputSuspense />
       </ErrorBoundary>
     </Suspense>
@@ -21,53 +21,105 @@ export const SearchInput = () => {
 
 const SearchInputSuspense = () => {
   const router = useRouter()
-  const searchParams = useSearchParams()
-
-  const query = searchParams.get("query") || ""
-  const categoryId = searchParams.get("categoryId") || ""
+  const pathname = usePathname()
+  const { query, categoryId, navigateBack } = useSearchNavigation()
 
   const [value, setValue] = useState(query)
 
-  // TODO: When clearing query in search input, url not updating
-  // TODO: When searching exact title, video doesn't show up (search doesn't like spaces)
-  // TODO: When selecting Home from nav side bar, search input and url doesn't clear/update
-  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+  useEffect(() => {
+    setValue(query)
+  }, [query])
 
-    const url = new URL("/search", APP_URL)
-    const newQuery = value.trim()
+  useEffect(() => {
+    const onPopState = () => {
+      const url = new URL(window.location.href)
+      const urlPathname = url.pathname
+      const urlSearch = url.search
 
-    url.searchParams.set("query", newQuery)
+      if (urlSearch.includes("?query=") && query && !value) {
+        setValue(query)
+      }
 
-    if (categoryId) {
-      url.searchParams.set("categoryId", categoryId)
+      if (
+        (urlPathname === "/search" || urlPathname === "/") &&
+        !urlSearch.includes("?query=") &&
+        !query &&
+        value
+      ) {
+        setValue("")
+      }
     }
 
-    if (newQuery === "") {
-      url.searchParams.delete("query")
-    }
+    window.addEventListener("popstate", onPopState)
+    return () => window.removeEventListener("popstate", onPopState)
+  }, [query, value])
 
-    setValue(newQuery)
-    router.push(url.toString())
-  }
+  const handleSearch = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault()
+      const trimmed = value.trim()
+
+      if (!trimmed) {
+        setValue("")
+        navigateBack()
+        return
+      }
+      
+      const params = new URLSearchParams()
+      params.set("query", trimmed)
+      if (categoryId) params.set("categoryId", categoryId)
+
+      router.push(`/search?${params.toString()}`)
+    },
+    [categoryId, navigateBack, router, value]
+  )
+
+  const handleChange = useCallback(
+    (newValue: string) => {
+      setValue(newValue)
+
+      if (pathname === "/search" && newValue === "") {
+        const params = new URLSearchParams()
+
+        if (categoryId) {
+          params.set("categoryId", categoryId)
+        }
+        
+        const newUrl = params.toString() ? `/?${params.toString()}` : "/search"
+        router.push(newUrl)
+      }
+    },
+    [categoryId, pathname, router]
+  )
+
+  const handleClear = useCallback(() => {
+    setValue("")
+    navigateBack()
+  }, [navigateBack])
   
   return (
     <form className="flex w-full max-w-[600px]" onSubmit={handleSearch}>
       <div className="relative w-full">
+        <label htmlFor="search-bar" className="sr-only">
+          Search the site
+        </label>
         <input
+          id="search-bar"
           name="search"
-          value={value}
-          onChange={e => setValue(e.target.value)}
           type="text"
+          value={value}
           placeholder="Search"
+          onChange={e => handleChange(e.target.value)}
           className="w-full pl-4 py-2 pr-12 rounded-l-full border focus:outline-none focus:border-blue-500"
+          aria-label="Search input"
         />
-        {value && (
+        {value.trim().length > 0 && (
           <Button
             type="button"
             variant="ghost"
             size="icon"
-            onClick={() => setValue("")}
+            onClick={handleClear}
+            aria-label="Clear search input"
             className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full"
           >
             <XIcon className="text-gray-500" />
@@ -76,6 +128,7 @@ const SearchInputSuspense = () => {
       </div>
       <button
         type="submit"
+        aria-label="Submit search"
         disabled={!value.trim()}
         className="px-5 py-2.5 bg-gray-100 border border-l-0 rounded-r-full hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
       >
