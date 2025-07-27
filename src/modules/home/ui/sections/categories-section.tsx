@@ -40,7 +40,7 @@ const CategoriesSectionSuspense = ({ categoryId }: CategoriesSectionProps) => {
 
     // If searchParams changes to become an [] Array of ids,
     // then we will have to use a different method other than set. append perhaps
-    if (value) {
+    if (value && value !== categoryId) {
       url.searchParams.set("categoryId", value)
     } else {
       url.searchParams.delete("categoryId")
