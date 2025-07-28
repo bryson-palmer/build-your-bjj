@@ -93,7 +93,6 @@ export const FilterCarousel = ({
             ))
           }
           {!isLoading && data.map(item => (
-            // TODO: we have an onSelect but we will need a deselect option for unclicking and removing a categoryId
             <CarouselItem
               key={item.value}
               onClick={() => onSelect(item.value)}
