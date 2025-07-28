@@ -540,7 +540,7 @@ export const videosRouter = createTRPCRouter({
           }
         ]
       },
-      cors_origin: "*" // TODO: in production, set to the url
+      cors_origin: "https://build-your-bjj.vercel.app" // "*"
     })
 
     // Create new database video
