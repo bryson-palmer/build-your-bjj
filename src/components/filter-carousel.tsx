@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 import { cn } from "@/lib/utils"
 import {
@@ -14,14 +14,13 @@ import {
 import { Skeleton } from "./ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 
-// If categoryId becomes an [] of ids, then we will need to update this value type and onSelect
 interface FilterCarouselProps {
-  value?: string | null;
-  isLoading?: boolean;
-  onSelect: (value: string | null) => void;
+  value?: string | null
+  isLoading?: boolean
+  onSelect(value: string | null): void
   data: {
-    value: string;
-    label: string;
+    value: string
+    label: string
   }[]
 }
 
@@ -32,25 +31,85 @@ export const FilterCarousel = ({
   isLoading,
 }: FilterCarouselProps) => {
   const [api, setApi] = useState<CarouselApi>()
-  // Position
   const [current, setCurrent] = useState(0)
-  // Total items
   const [count, setCount] = useState(0)
+  const lastSnapIndex = useRef<number>(0)
+
+  const scrollToCategory = useCallback((index: number, animate = true) => {
+    if (api) {
+      api.scrollTo(index, !animate)
+      lastSnapIndex.current = index
+    }
+  }, [api])
 
   useEffect(() => {
-    if (!api) {
-      return
-    }
-
-    // TODO: when we have a categoryId and then add search query,
-    //       category stays selected but the carousel snaps back to the beginning
+    if (!api) return
 
     setCount(api.scrollSnapList().length)
     setCurrent(api.selectedScrollSnap() + 1)
-    api.on("select", () => {
-      setCurrent(api.selectedScrollSnap() + 1)
-    })
-  }, [api])
+
+    const handleSelect = () => {
+      const index = api.selectedScrollSnap()
+      lastSnapIndex.current = index
+      setCurrent(index + 1)
+    }
+
+    api.on("select", handleSelect)
+
+    if (value) {
+      const index = data.findIndex(item => item.value === value)
+      if (index >= 0) scrollToCategory(index + 1, false)
+    } else {
+      scrollToCategory(lastSnapIndex.current || 0, false)
+    }
+
+    return () => {
+      api.off("select", handleSelect)
+    }
+  }, [api, value, data, scrollToCategory])
+
+  const renderSkeletons = () =>
+    Array.from({ length: 14 }).map((_, index) => (
+      <CarouselItem key={index} className="pl-3 basis-auto">
+        <Skeleton className="rounded-lg px-3 py-1 h-full text-sm w-[100px] font-semibold">
+          &nbsp;
+        </Skeleton>
+      </CarouselItem>
+    ))
+
+  const renderCategories = () => (
+    <>
+      <CarouselItem
+        onClick={() => onSelect(null)}
+        className="pl-3 basis-auto"
+      >
+        <Badge
+          variant={!value ? "default" : "secondary"}
+          className="rounded-lg px-3 py-1 cursor-pointer whitespace-nowrap text-sm"
+        >
+          All
+        </Badge>
+      </CarouselItem>
+      {data.map(item => (
+        <CarouselItem
+          key={item.value}
+          onClick={() => {
+            onSelect(item.value)
+            const index = data.findIndex(d => d.value === item.value)
+            if (index >= 0) scrollToCategory(index + 1)
+          }}
+          className="pl-3 basis-auto"
+        >
+          <Badge
+            variant={value === item.value ? "default" : "secondary"}
+            className="rounded-lg px-3 py-1 cursor-pointer whitespace-nowrap text-sm"
+          >
+            {item.label}
+          </Badge>
+        </CarouselItem>
+      ))}
+    </>
+  )
 
   return (
     <div className="relative w-full">
@@ -70,45 +129,16 @@ export const FilterCarousel = ({
         className="w-full px-12"
       >
         <CarouselContent className="-ml-3">
-          {!isLoading && (
-            <CarouselItem
-              onClick={() => onSelect(null)}
-              className="pl-3 basis-auto"
-            >
-              <Badge
-                variant={!value ? "default" : "secondary"}
-                className="rounded-lg px-3 py-1 cursor-pointer whitespace-nowrap text-sm"
-              >
-                All
-              </Badge>
-            </CarouselItem>
-          )}
-          {isLoading &&
-            Array.from({ length: 14 }).map((_, index) => (
-              <CarouselItem key={index} className="pl-3 basis-auto">
-                <Skeleton className="rounded-lg px-3 py-1 h-full text-sm w-[100px] font-semibold">
-                  &nbsp;
-                </Skeleton>
-              </CarouselItem>
-            ))
-          }
-          {!isLoading && data.map(item => (
-            <CarouselItem
-              key={item.value}
-              onClick={() => onSelect(item.value)}
-              className="pl-3 basis-auto"
-            >
-              <Badge
-                variant={value === item.value ? "default" : "secondary"}
-                className="rounded-lg px-3 py-1 cursor-pointer whitespace-nowrap text-sm"
-              >
-                {item.label}
-              </Badge>
-            </CarouselItem>
-          ))}
+          {isLoading ? renderSkeletons() : renderCategories()}
         </CarouselContent>
-        <CarouselPrevious className="left-0 z-20" />
-        <CarouselNext className="right-0 z-20" />
+        <CarouselPrevious
+          className="left-0 z-20"
+          onClick={() => scrollToCategory(Math.max(current - 2, 0))}
+        />
+        <CarouselNext
+          className="right-0 z-20"
+          onClick={() => scrollToCategory(Math.min(current, count - 1))}
+        />
       </Carousel>
       {/* Right fade */}
       <div
